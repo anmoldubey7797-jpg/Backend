@@ -32,6 +32,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import userRouter from "./routes/user.routes.js";
+import connectCloudinary from "./utils/cloudinary.js";
 
 const app = express();
 
@@ -39,6 +40,7 @@ const app = express();
     origin:process.env.CORS_ORIGIN,
    credentials:true
  }))
+ await connectCloudinary();
 
 app.use(express.json());
 app.use(cookieParser());
