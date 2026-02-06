@@ -53,12 +53,12 @@ if (!avatarLocalPath) {
   throw new ApiError(400, "Avatar file is required");
 }
 
-const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
-
 const avatar = await uploadOnCloudinary(avatarLocalPath);
 if (!avatar) {
   throw new ApiError(500, "Avatar upload failed");
 }
+
+const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
 
 let coverImage;
 if (coverImageLocalPath) {
@@ -285,31 +285,59 @@ const updateUserAvatar=asyncHandler(async(req,res)=>{
  
 })
 
+// const updateUserCoverImage=asyncHandler(async(req,res)=>{
+//   const coverImagePath=req.file?.path
+
+//   if(!coverImagePath){
+//     throw new ApiError(400,"Error at coverImage ")
+//   }
+
+//   const coverImage=await uploadOnCloudinary(coverImagePath)
+
+//   if(!coverImage){
+//     throw new ApiError(400,"Error At coverImage Updation")
+//   }
+
+//  const user= await User.findByIdAndUpdate(req.user?._id,{
+//     $set:{
+//       coverImage:coverImage.url
+//     }
+//   },{new:true}
+// ).select("-password")
+
+// return  res
+// .status(200)
+// .json(new ApiResponse(200,{message:"Successfully Update CoverImage"},user))
+
+// })
 
 const updateUserCoverImage=asyncHandler(async(req,res)=>{
-  const coverImagePath=req.file?.path
+  if(!req.file || !req.file.path){
+    const user=await User.findById(req.user._id).select("-password")
 
-  if(!coverImagePath){
-    throw new ApiError(400,"Error at coverImage ")
+    return res.status(200).json(new ApiResponse(200,user,"No coverImage Uploaded here"))
   }
 
-  const coverImage=await uploadOnCloudinary(coverImagePath)
+  const coverImage=await uploadOnCloudinary(req.file.path)
 
   if(!coverImage){
-    throw new ApiError(400,"Error At coverImage Updation")
+    throw new ApiError(404,"CoverImage not present please upload it")
   }
+  const user=await User.findByIdAndUpdate(req.user._id,
+    {
+      $set:{
+        coverImage:coverImage.url,
+      },
+    },{new:true}
+  ).select("-password")
 
- const user= await User.findByIdAndUpdate(req.user?._id,{
-    $set:{
-      coverImage:coverImage.url
-    }
-  },{new:true}
-).select("-password")
-
-return  res
-.status(200)
-.json(new ApiResponse(200,{message:"Successfully Update CoverImage"},user))
-
+   return res.status(200).json(
+    new ApiResponse(
+      200,
+      user,
+      "Cover image updated successfully"
+    )
+  );
 })
 export {registerUser,loginUser,logoutUser,refreshAccessToken,changeCurrentPassword,getCurrentUser,updateAccountDetails,updateUserAvatar,updateUserCoverImage}
 
